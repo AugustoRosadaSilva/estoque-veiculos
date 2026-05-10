@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Estoque de Veículos</title>
+
+    <style>
+
+        body {
+
+            font-family: Arial, sans-serif;
+
+            margin: 40px;
+
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+
+            color: #333;
+        }
+
+        form {
+
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+        }
+
+        input,
+        select,
+        button {
+
+            padding: 10px;
+
+            margin: 5px;
+        }
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            background: white;
+        }
+
+        th,
+        td {
+
+            border: 1px solid #ccc;
+
+            padding: 10px;
+
+            text-align: center;
+        }
+
+        th {
+
+            background-color: #ddd;
+        }
+
+        button {
+
+            cursor: pointer;
+        }
+
+        .delete-btn {
+
+            background-color: red;
+
+            color: white;
+
+            border: none;
+
+            padding: 8px;
+        }
+
+        .edit-btn {
+
+            background-color: orange;
+
+            color: white;
+
+            border: none;
+
+            padding: 8px;
+        }
+
+        .filtros {
+
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>Sistema de Estoque de Veículos</h1>
+
+
+
+<form id="veiculoForm">
+
+    <input type="hidden" id="veiculoId">
+
+    <input type="text"
+           id="marca"
+           placeholder="Marca"
+           required>
+
+    <input type="text"
+           id="modelo"
+           placeholder="Modelo"
+           required>
+
+    <input type="text"
+           id="cor"
+           placeholder="Cor"
+           required>
+
+    <input type="number"
+           id="ano"
+           placeholder="Ano"
+           required>
+
+    <input type="number"
+           id="preco"
+           placeholder="Preço"
+           required>
+
+    <input type="number"
+           id="quilometragem"
+           placeholder="Quilometragem"
+           required>
+
+    <select id="status">
+
+        <option value="DISPONIVEL">
+            DISPONIVEL
+        </option>
+
+        <option value="VENDIDO">
+            VENDIDO
+        </option>
+
+        <option value="RESERVADO">
+            RESERVADO
+        </option>
+
+    </select>
+
+    <button type="submit">
+        Salvar
+    </button>
+
+</form>
+
+
+
+<div class="filtros">
+
+    <h2>Filtros</h2>
+
+    <input type="text"
+           id="filtroMarca"
+           placeholder="Buscar Marca">
+
+    <input type="text"
+           id="filtroModelo"
+           placeholder="Buscar Modelo">
+
+    <input type="number"
+           id="filtroAno"
+           placeholder="Buscar Ano">
+
+    <select id="filtroStatus">
+
+        <option value="">
+            TODOS
+        </option>
+
+        <option value="DISPONIVEL">
+            DISPONIVEL
+        </option>
+
+        <option value="VENDIDO">
+            VENDIDO
+        </option>
+
+        <option value="RESERVADO">
+            RESERVADO
+        </option>
+
+    </select>
+
+    <button onclick="filtrarVeiculos()">
+        Filtrar
+    </button>
+
+    <button onclick="listarVeiculos()">
+        Limpar
+    </button>
+
+</div>
+
+
+
+<table>
+
+    <thead>
+
+    <tr>
+
+        <th>ID</th>
+
+        <th>Marca</th>
+
+        <th>Modelo</th>
+
+        <th>Cor</th>
+
+        <th>Ano</th>
+
+        <th>Preço</th>
+
+        <th>Quilometragem</th>
+
+        <th>Status</th>
+
+        <th>Ações</th>
+
+    </tr>
+
+    </thead>
+
+    <tbody id="tabelaVeiculos"></tbody>
+
+</table>
+
+<script>
+
+    const API =
+        'http://localhost:8080/veiculos';
+
+
+
+    async function listarVeiculos() {
+
+        const resposta =
+            await fetch(API);
+
+        const veiculos =
+            await resposta.json();
+
+        const tabela =
+            document.getElementById(
+                'tabelaVeiculos'
+            );
+
+        tabela.innerHTML = '';
+
+        veiculos.forEach(veiculo => {
+
+            tabela.innerHTML += `
+
+                <tr>
+
+                    <td>${veiculo.id}</td>
+
+                    <td>${veiculo.modelo?.marca?.nome || ''}</td>
+
+                    <td>${veiculo.modelo?.nome || ''}</td>
+
+                    <td>${veiculo.cor}</td>
+
+                    <td>${veiculo.ano}</td>
+
+                    <td>R$ ${veiculo.preco}</td>
+
+                    <td>${veiculo.quilometragem}</td>
+
+                    <td>${veiculo.status}</td>
+
+                    <td>
+
+                        <button
+                            class="edit-btn"
+                            onclick="editarVeiculo(${veiculo.id})">
+
+                            Editar
+
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="deletarVeiculo(${veiculo.id})">
+
+                            Excluir
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `;
+        });
+    }
+
+
+
+    document.getElementById(
+        'veiculoForm'
+    ).addEventListener(
+        'submit',
+        async function (e) {
+
+            e.preventDefault();
+
+            const id =
+                document.getElementById(
+                    'veiculoId'
+                ).value;
+
+            const veiculo = {
+
+                marca:
+                document.getElementById(
+                    'marca'
+                ).value,
+
+                modelo:
+                document.getElementById(
+                    'modelo'
+                ).value,
+
+                cor:
+                document.getElementById(
+                    'cor'
+                ).value,
+
+                ano:
+                    parseInt(
+                        document.getElementById(
+                            'ano'
+                        ).value
+                    ),
+
+                preco:
+                    parseFloat(
+                        document.getElementById(
+                            'preco'
+                        ).value
+                    ),
+
+                quilometragem:
+                    parseFloat(
+                        document.getElementById(
+                            'quilometragem'
+                        ).value
+                    ),
+
+                status:
+                document.getElementById(
+                    'status'
+                ).value
+            };
+
+            if (id) {
+
+                await fetch(`${API}/${id}`, {
+
+                    method: 'PUT',
+
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+
+                    body:
+                        JSON.stringify(veiculo)
+                });
+
+            } else {
+
+                await fetch(API, {
+
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type':
+                            'application/json'
+                    },
+
+                    body:
+                        JSON.stringify(veiculo)
+                });
+            }
+
+            limparFormulario();
+
+            listarVeiculos();
+        });
+
+
+
+    async function editarVeiculo(id) {
+
+        const resposta =
+            await fetch(`${API}`);
+
+        const veiculos =
+            await resposta.json();
+
+        const veiculo =
+            veiculos.find(v => v.id === id);
+
+        document.getElementById(
+            'veiculoId'
+        ).value = veiculo.id;
+
+        document.getElementById(
+            'marca'
+        ).value =
+            veiculo.modelo?.marca?.nome || '';
+
+        document.getElementById(
+            'modelo'
+        ).value =
+            veiculo.modelo?.nome || '';
+
+        document.getElementById(
+            'cor'
+        ).value =
+            veiculo.cor;
+
+        document.getElementById(
+            'ano'
+        ).value =
+            veiculo.ano;
+
+        document.getElementById(
+            'preco'
+        ).value =
+            veiculo.preco;
+
+        document.getElementById(
+            'quilometragem'
+        ).value =
+            veiculo.quilometragem;
+
+        document.getElementById(
+            'status'
+        ).value =
+            veiculo.status;
+    }
+
+
+
+    async function deletarVeiculo(id) {
+
+        await fetch(`${API}/${id}`, {
+
+            method: 'DELETE'
+        });
+
+        listarVeiculos();
+    }
+
+
+
+    async function filtrarVeiculos() {
+
+        const resposta =
+            await fetch(API);
+
+        const veiculos =
+            await resposta.json();
+
+        const marca =
+            document.getElementById(
+                'filtroMarca'
+            ).value.toLowerCase();
+
+        const modelo =
+            document.getElementById(
+                'filtroModelo'
+            ).value.toLowerCase();
+
+        const ano =
+            document.getElementById(
+                'filtroAno'
+            ).value;
+
+        const status =
+            document.getElementById(
+                'filtroStatus'
+            ).value;
+
+        const filtrados =
+            veiculos.filter(v => {
+
+                return (
+
+                    (!marca ||
+
+                        v.modelo?.marca?.nome
+                            ?.toLowerCase()
+                            .includes(marca))
+
+                    &&
+
+                    (!modelo ||
+
+                        v.modelo?.nome
+                            ?.toLowerCase()
+                            .includes(modelo))
+
+                    &&
+
+                    (!ano ||
+
+                        v.ano == ano)
+
+                    &&
+
+                    (!status ||
+
+                        v.status == status)
+                );
+            });
+
+        const tabela =
+            document.getElementById(
+                'tabelaVeiculos'
+            );
+
+        tabela.innerHTML = '';
+
+        filtrados.forEach(veiculo => {
+
+            tabela.innerHTML += `
+
+                <tr>
+
+                    <td>${veiculo.id}</td>
+
+                    <td>${veiculo.modelo?.marca?.nome || ''}</td>
+
+                    <td>${veiculo.modelo?.nome || ''}</td>
+
+                    <td>${veiculo.cor}</td>
+
+                    <td>${veiculo.ano}</td>
+
+                    <td>R$ ${veiculo.preco}</td>
+
+                    <td>${veiculo.quilometragem}</td>
+
+                    <td>${veiculo.status}</td>
+
+                    <td>
+
+                        <button
+                            class="edit-btn"
+                            onclick="editarVeiculo(${veiculo.id})">
+
+                            Editar
+
+                        </button>
+
+                        <button
+                            class="delete-btn"
+                            onclick="deletarVeiculo(${veiculo.id})">
+
+                            Excluir
+
+                        </button>
+
+                    </td>
+
+                </tr>
+
+            `;
+        });
+    }
+
+
+
+    function limparFormulario() {
+
+        document.getElementById(
+            'veiculoForm'
+        ).reset();
+
+        document.getElementById(
+            'veiculoId'
+        ).value = '';
+    }
+
+
+
+    listarVeiculos();
+
+</script>
+
+</body>
+</html>
