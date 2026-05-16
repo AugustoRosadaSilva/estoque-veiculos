@@ -36,4 +36,20 @@ public class VeiculoController {
 
         service.deletar(id);
     }
-}
+
+    @PutMapping("/{id}")
+    public Veiculo atualizar(@PathVariable Long id,
+                             @RequestBody VeiculoRequestDTO dto) {
+
+        return service.atualizar(id, dto);
+    }
+
+    @GetMapping("/{id}")
+    public Veiculo buscarPorId(@PathVariable Long id) {
+
+        return service.buscarPorId(id);
+    }
+
+    }
+
+

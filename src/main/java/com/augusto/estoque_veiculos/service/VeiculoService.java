@@ -88,4 +88,62 @@ public class VeiculoService {
     public void deletar(Long id) {
         veiculoRepository.deleteById(id);
     }
+
+    public Veiculo atualizar(Long id, VeiculoRequestDTO dto) {
+
+        Veiculo veiculo = veiculoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Veículo não encontrado"));
+
+
+
+        Marca marca = marcaRepository
+                .findByNome(dto.getMarca())
+                .orElseGet(() -> {
+
+                    Marca novaMarca = new Marca();
+
+                    novaMarca.setNome(dto.getMarca());
+
+                    return marcaRepository.save(novaMarca);
+                });
+
+
+
+        Modelo modelo = modeloRepository
+                .findByNome(dto.getModelo())
+                .orElseGet(() -> {
+
+                    Modelo novoModelo = new Modelo();
+
+                    novoModelo.setNome(dto.getModelo());
+
+                    novoModelo.setMarca(marca);
+
+                    return modeloRepository.save(novoModelo);
+                });
+
+
+
+        veiculo.setCor(dto.getCor());
+
+        veiculo.setAno(dto.getAno());
+
+        veiculo.setPreco(dto.getPreco());
+
+        veiculo.setQuilometragem(dto.getQuilometragem());
+
+        veiculo.setStatus(StatusVeiculo.valueOf(dto.getStatus()));
+
+        veiculo.setModelo(modelo);
+
+        return veiculoRepository.save(veiculo);
+    }
+
+    public Veiculo buscarPorId(Long id) {
+
+        return veiculoRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Veículo não encontrado"));
+    }
 }
